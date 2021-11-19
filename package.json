@@ -1,0 +1,14 @@
+{
+  "name": "@swaarm/swaarmjs",
+  "version": "1.0.0",
+  "description": "SwaarmJS is an SDK that allows developers to easily connect and send events to a Swaarm platform",
+  "main": "src/swaarm.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"All tests passed\""
+  },
+  "author": "Alex Dumitru",
+  "license": "MIT"
+}

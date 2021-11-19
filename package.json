@@ -10,5 +10,8 @@
     "test": "echo \"All tests passed\""
   },
   "author": "Alex Dumitru",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "url": "https://github.com/swaarm/swaarmjs"
+  }
 }

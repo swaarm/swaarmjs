@@ -5,7 +5,7 @@ SwaarmJS is an attribution and measuring SDK that allows you to interact with th
 ## Installing
 
 Just add the dist/swaarm.min.js in your html page and you are ready to go. Alternatively you can fetch it directly from
-our CDN at:
+npm: https://www.npmjs.com/package/@swaarm/swaarmjs
 
 ## Usage
 

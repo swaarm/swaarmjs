@@ -45,7 +45,7 @@ window._Swaarm = {
     },
 
     emitEvent: function (clkid, options) {
-        var url = this.trackingUrl + "?click_id=" + clkid;
+        var url = this.trackingUrl + "postback?click_id=" + clkid;
         if (options == null) {
             options = {}
         }
@@ -59,13 +59,24 @@ window._Swaarm = {
         this.sendRequest(url);
     },
 
-    sendRequest: function (url) {
+    sendRequest: function (url, callback, parseData) {
         this.log("Requesting " + url)
         var oReq = new XMLHttpRequest();
         var self = this;
         oReq.addEventListener("load", function () {
             self.log("Request to " + url + " sent successfully.")
         });
+        oReq.onreadystatechange = function (event) {
+            if (oReq.readyState === 4 && oReq.status === 200) {
+                var data = oReq.responseText;
+                if (parseData === true) {
+                    data = JSON.parse(oReq.responseText)
+                }
+                if (callback != null) {
+                    callback(data);
+                }
+            }
+        }
         oReq.open("GET", url);
         oReq.send();
     },
@@ -80,6 +91,9 @@ window._Swaarm = {
         if (trackingUrl == null || !trackingUrl.startsWith("http")) {
             throw new Error("Invalid tracking url received: " + trackingUrl)
         }
+        if (trackingUrl.slice(-1) !== '/') {
+            trackingUrl = trackingUrl + '/';
+        }
         this.trackingUrl = trackingUrl
         this.configured = true;
     },
@@ -90,7 +104,6 @@ window._Swaarm = {
 
     land: function () {
         this.validateInit();
-        this.log("Landed.")
         var params = this.getQueryParams(window.location.search);
         if (params.clkid == null) {
             this.log("No clkid found.")
@@ -101,6 +114,56 @@ window._Swaarm = {
         this.setCookie(this.SWAARM_CLICK_ID_NAME, params.clkid, 168);
     },
 
+    click: function () {
+        this.validateInit();
+        var queryString = window.location.search;
+        this.sendRequest(this.trackingUrl + "click" + queryString);
+    },
+
+    adDetails: function (offerId, publisherId, callback) {
+        this.validateInit();
+        var queryString = window.location.search;
+        if (offerId != null && publisherId != null) {
+            queryString = "offer_id=" + offerId + "&pub_id" + publisherId;
+        }
+        this.sendRequest(this.trackingUrl + "ad" + queryString, callback, true);
+    },
+
+    replaceMarkedLinks: function (selector, prelandingOffer, prelandingPub) {
+        var realSelector = selector == null ? "a" : selector;
+        var self = this;
+        this.adDetails(null, null, function (data) {
+            var advTrackingUrl = data['advertiserTrackingUrl'];
+            var clickUrl = data['clickTrackingUrl'] + "&no_redirect=true";
+            var impressionUrl = data['impressionTrackingUrl'] + "&no_redirect=true";
+            if (prelandingOffer == null) {
+                self.sendRequest(impressionUrl)
+            } else {
+                self.sendRequest(self.trackingUrl + 'click?offer_id=' + prelandingOffer + '&pub_id=' + prelandingPub + "&no_redirect=true")
+            }
+            var elementsMatched = document.querySelectorAll(realSelector);
+            elementsMatched.forEach((e) => {
+                e.href = advTrackingUrl;
+                e.addEventListener('click', function () {
+                    self.sendRequest(clickUrl, function () {
+                        document.location.href = advTrackingUrl;
+                    });
+                })
+            })
+
+        })
+    },
+
+    impression: function () {
+        this.validateInit();
+        var queryString = window.location.search;
+        this.sendRequest(this.trackingUrl + "impression" + queryString);
+    },
+    fetch: function () {
+        this.validateInit();
+        var queryString = window.location.search;
+        this.sendRequest(this.trackingUrl + "impression" + queryString);
+    },
     getClickId: function () {
         var clickId = window.localStorage.getItem(this.SWAARM_CLICK_ID_NAME);
         if (clickId == null) {
@@ -136,6 +199,10 @@ window.Swaarm = {
         if (settings.debug) {
             window._Swaarm.enableDebug();
         }
+    },
+
+    replaceMarkedLinks: function (selector, prelandingOffer, prelandingPub) {
+        window._Swaarm.replaceMarkedLinks(selector, prelandingOffer, prelandingPub);
     },
 
     /**

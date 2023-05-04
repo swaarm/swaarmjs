@@ -159,11 +159,6 @@ window._Swaarm = {
         var queryString = window.location.search;
         this.sendRequest(this.trackingUrl + "impression" + queryString);
     },
-    fetch: function () {
-        this.validateInit();
-        var queryString = window.location.search;
-        this.sendRequest(this.trackingUrl + "impression" + queryString);
-    },
     getClickId: function () {
         var clickId = window.localStorage.getItem(this.SWAARM_CLICK_ID_NAME);
         if (clickId == null) {
@@ -201,6 +196,13 @@ window.Swaarm = {
         }
     },
 
+    /**
+     * Replaces all the links defined by the given selector with the advertiser tracking url for the offer
+     * found in the URL params
+     * @param selector any selector in the format of document.querySelectorAll
+     * @param prelandingOffer optional an offer to which a prelanding click should be sent
+     * @param prelandingPub the pub for the prelanding offer
+     */
     replaceMarkedLinks: function (selector, prelandingOffer, prelandingPub) {
         window._Swaarm.replaceMarkedLinks(selector, prelandingOffer, prelandingPub);
     },

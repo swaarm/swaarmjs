@@ -114,10 +114,29 @@ window._Swaarm = {
         this.setCookie(this.SWAARM_CLICK_ID_NAME, params.clkid, 168);
     },
 
-    click: function () {
+    click: function (extras, callback) {
         this.validateInit();
-        var queryString = window.location.search;
-        this.sendRequest(this.trackingUrl + "click" + queryString);
+        this._baseClickImpression("click", extras, callback)
+    },
+
+    impression: function (extras, callback) {
+        this.validateInit();
+        this._baseClickImpression("impression", extras, callback)
+    },
+
+    _baseClickImpression: function (eventType, extras, callback) {
+        this.validateInit();
+        var params = this.getQueryParams(window.location.search);
+        for (var attr in extras) {
+            params[attr] = extras[attr];
+        }
+
+        var queryParts = []
+        for (var param in params) {
+            queryParts.push(param + "=" + params[param]);
+        }
+        var queryString = queryParts.join("&");
+        this.sendRequest(this.trackingUrl + eventType + queryString, callback, false);
     },
 
     adDetails: function (offerId, publisherId, callback) {
@@ -154,11 +173,6 @@ window._Swaarm = {
         })
     },
 
-    impression: function () {
-        this.validateInit();
-        var queryString = window.location.search;
-        this.sendRequest(this.trackingUrl + "impression" + queryString);
-    },
     getClickId: function () {
         var clickId = window.localStorage.getItem(this.SWAARM_CLICK_ID_NAME);
         if (clickId == null) {
@@ -211,7 +225,27 @@ window.Swaarm = {
      * Registers this user as a potential converting user. This method should be called on every landing page.
      */
     land: function () {
-        window._Swaarm.land();
+        window._Swaarm.click();
+    },
+
+    /**
+     * Registers a click with the given properties
+     * @param params a map where the key is the parameter name (e.g. offer_id, pub_id) and the value is the parameter
+     * value (e.g. 10, 20)
+     * @param callback a function to execute after the click is registered
+     */
+    click: function (params, callback) {
+        window._Swaarm.click(params, callback);
+    },
+
+    /**
+     * Registers an impressions with the given properties
+     * @param params a map where the key is the parameter name (e.g. offer_id, pub_id) and the value is the parameter
+     * value (e.g. 10, 20)
+     * @param callback a function to execute after the impression is registered
+     */
+    impression: function (params, callback) {
+        window._Swaarm.click(params, callback);
     },
 
     /**

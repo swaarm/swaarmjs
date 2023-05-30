@@ -225,7 +225,7 @@ window.Swaarm = {
      * Registers this user as a potential converting user. This method should be called on every landing page.
      */
     land: function () {
-        window._Swaarm.click();
+        window._Swaarm.land();
     },
 
     /**

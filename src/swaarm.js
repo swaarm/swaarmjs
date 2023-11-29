@@ -173,7 +173,7 @@ window._Swaarm = {
     },
 
     _landOrganic: function () {
-        var url = this.trackingUrl + "click?no_redirect=true&user_ip=188.24.151.248&web_token=" + this.webToken + "&" + this._collectUtmData();
+        var url = this.trackingUrl + "click?no_redirect=true&web_token=" + this.webToken + "&" + this._collectUtmData();
         this.log("Organic landing: " + url)
         var self = this;
         this.sendRequest(url, function (data) {

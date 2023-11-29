@@ -17,6 +17,15 @@ Before using the SDK you need to configure it in the following way:
     })
 ``` 
 
+If you are using a Web App, you will need to also add the App Token:
+
+```javascript
+    Swaarm.initialize({
+        "trackingUrl": "http://track.example.org", //This is the base url of your Swaarm tracking domain,
+        "webToken": "978935fe-52ce-43f4-b7fc-692bfd964f8e"
+    })
+``` 
+
 ## Registering an impression
 
 One of the simplest actions you can do with the Swaarm JS SDK is to register an impression. To do this you can call

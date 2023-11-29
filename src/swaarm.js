@@ -1,4 +1,24 @@
 window._Swaarm = {
+
+    _generateUUID: function () {
+        var self = {};
+        var lut = [];
+        for (var i = 0; i < 256; i++) {
+            lut[i] = (i < 16 ? '0' : '') + (i).toString(16);
+        }
+        self.generate = function () {
+            var d0 = Math.random() * 0xffffffff | 0;
+            var d1 = Math.random() * 0xffffffff | 0;
+            var d2 = Math.random() * 0xffffffff | 0;
+            var d3 = Math.random() * 0xffffffff | 0;
+            return lut[d0 & 0xff] + lut[d0 >> 8 & 0xff] + lut[d0 >> 16 & 0xff] + lut[d0 >> 24 & 0xff] + '-' +
+                lut[d1 & 0xff] + lut[d1 >> 8 & 0xff] + '-' + lut[d1 >> 16 & 0x0f | 0x40] + lut[d1 >> 24 & 0xff] + '-' +
+                lut[d2 & 0x3f | 0x80] + lut[d2 >> 8 & 0xff] + '-' + lut[d2 >> 16 & 0xff] + lut[d2 >> 24 & 0xff] +
+                lut[d3 & 0xff] + lut[d3 >> 8 & 0xff] + lut[d3 >> 16 & 0xff] + lut[d3 >> 24 & 0xff];
+        }
+        return self;
+    },
+
     getQueryParams: function (qs) {
         qs = qs.split('+').join(' ');
 
@@ -35,6 +55,7 @@ window._Swaarm = {
     },
 
     SWAARM_CLICK_ID_NAME: "swaarm_clkid",
+    SWAARM_USER_ID_NAME: "swaarm_userid",
     DEBUG: false,
 
     log: function (message) {
@@ -87,7 +108,7 @@ window._Swaarm = {
         }
     },
 
-    initialize: function (trackingUrl) {
+    initialize: function (trackingUrl, webToken) {
         if (trackingUrl == null || !trackingUrl.startsWith("http")) {
             throw new Error("Invalid tracking url received: " + trackingUrl)
         }
@@ -96,22 +117,93 @@ window._Swaarm = {
         }
         this.trackingUrl = trackingUrl
         this.configured = true;
+        this.webToken = webToken;
     },
 
     enableDebug: function () {
         this.DEBUG = true;
     },
 
+    _collectUtmData: function () {
+        var params = this.getQueryParams(window.location.search);
+        var parts = []
+        if (params.utm_campaign) {
+            parts.push("campaign=" + params.utm_campaign)
+        }
+        if (params.utm_adset) {
+            parts.push("adset=" + params.utm_adset)
+        }
+        if (params.utm_ad) {
+            parts.push("ad=" + params.utm_ad)
+        }
+        if (params.utm_source) {
+            parts.push("site=" + params.utm_source)
+        }
+        if (params.utm_term) {
+            parts.push("term=" + params.utm_term)
+        }
+        if (params.swcid) {
+            parts.push("campaign_id=" + params.swcid)
+        }
+        if (params.swasid) {
+            parts.push("adset_id=" + params.swasid)
+        }
+        if (params.swaid) {
+            parts.push("ad_id=" + params.swasid)
+        }
+        if (params.swc) {
+            parts.push("campaign_id=" + params.swc)
+        }
+        if (params.swas) {
+            parts.push("adset_id=" + params.swas)
+        }
+        if (params.swa) {
+            parts.push("ad_id=" + params.swa)
+        }
+        if (params.gclid) {
+            parts.push("pub_click_id=" + params.gclid)
+        }
+        if (params.fbclid) {
+            parts.push("pub_click_id=" + params.fbclid)
+        }
+        if (params.ttclid) {
+            parts.push("pub_click_id=" + params.ttclid)
+        }
+        return parts.join("&")
+    },
+
+    _landOrganic: function () {
+        var url = this.trackingUrl + "click?no_redirect=true&user_ip=188.24.151.248&web_token=" + this.webToken + "&" + this._collectUtmData();
+        this.log("Organic landing: " + url)
+        var self = this;
+        this.sendRequest(url, function (data) {
+            self._saveClickId(data.id)
+        }, true);
+    },
+
+    _generateUserId: function (click_id) {
+        if (!click_id) {
+            click_id = this._generateUUID();
+        }
+        window.localStorage.setItem(this.SWAARM_USER_ID_NAME, click_id);
+    },
+
+    _saveClickId: function (click_id) {
+        this.log("Saving clkid " + click_id + ".");
+        window.localStorage.setItem(this.SWAARM_CLICK_ID_NAME, click_id);
+        this.setCookie(this.SWAARM_CLICK_ID_NAME, click_id, 168);
+    },
+
     land: function () {
         this.validateInit();
         var params = this.getQueryParams(window.location.search);
+        this._generateUserId(params.clkid)
         if (params.clkid == null) {
             this.log("No clkid found.")
+            this._landOrganic();
             return;
         }
-        this.log("Saving clkid " + params.clkid + ".");
-        window.localStorage.setItem(this.SWAARM_CLICK_ID_NAME, params.clkid);
-        this.setCookie(this.SWAARM_CLICK_ID_NAME, params.clkid, 168);
+        this._saveClickId(params.clkid)
     },
 
     click: function (extras, callback) {
@@ -181,6 +273,11 @@ window._Swaarm = {
         return clickId;
     },
 
+    _getUserId: function () {
+        return window.localStorage.getItem(this.SWAARM_USER_ID_NAME);
+    },
+
+
     attribute: function () {
         this.event(null);
     },
@@ -201,10 +298,11 @@ window.Swaarm = {
      * Initializes the Swaarm SDK
      * @param settings a JS object that has the following properties:
      *  - trackingUrl string, the base domain URL for your Swaarm account, e.g. https://track.mycompany.swaarm-clients.com
+     *  - webToken string, optional parameter used for web apps to identify the app
      *  - debug boolean, to indicate if we should log debugging information
      */
     initialize: function (settings) {
-        window._Swaarm.initialize(settings.trackingUrl);
+        window._Swaarm.initialize(settings.trackingUrl, settings.webToken);
         if (settings.debug) {
             window._Swaarm.enableDebug();
         }
@@ -254,7 +352,7 @@ window.Swaarm = {
      * @returns String
      */
     identifier: function () {
-        return window._Swaarm.getClickId();
+        return window._Swaarm._getUserId();
     },
 
     /**

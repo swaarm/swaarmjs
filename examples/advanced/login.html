@@ -1,0 +1,30 @@
+<html>
+<head>
+    <title>Login</title>
+    <script src="../../src/swaarm.js"></script>
+</head>
+<body>
+
+<script>
+    Swaarm.initialize({
+        "trackingUrl": "https://track.hector.swaarm-app.com",
+        "webToken": "31f3e114-076b-4fae-86e3-9a3a900ccba1",
+        "debug": true
+    })
+</script>
+</body>
+<button onclick="Swaarm.attribute();" id="login">Login</button>
+
+<div style="visibility: hidden" id="loggedin">
+    <h3>You are logged in! <a href="events.html">Go to Events</a> or <a href="s2s.html">Go to S2S Events</a></h3>
+</div>
+
+
+<script>
+    document.getElementById("login").onclick = function (event) {
+        event.preventDefault()
+        Swaarm.open();
+        document.getElementById("loggedin").style.visibility = 'visible'
+    }
+</script>
+</html>

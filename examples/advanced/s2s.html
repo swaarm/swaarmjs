@@ -1,0 +1,27 @@
+<html>
+<head>
+    <title>S2S Examples</title>
+    <script src="../../src/swaarm.js"></script>
+</head>
+<script>
+    Swaarm.initialize({
+        "trackingUrl": "https://track.hector.swaarm-app.com",
+        "webToken": "31f3e114-076b-4fae-86e3-9a3a900ccba1",
+        "debug": true
+    })
+</script>
+<body>
+<h1>S2S Examples</h1>
+<p>This page is meant to exemplify the request URLs that have to be sent to Swaarm for S2S tracking</p>
+<p>We are firing the requests from the client side in this case for the sake of presentation, in reality the
+links below should fire from a server.</p>
+
+<a target="_blank" id="subscription" href="https://track.hector.swaarm-app.com/postback?s2s_token=93bca9e8-71af-4c43-81c7-7cf6ab4f3570&event_id=subscription&user_id=">Subscribe to newsletter</a><br/>
+
+<a target="_blank" id="sale" href="https://track.hector.swaarm-app.com/postback?s2s_token=93bca9e8-71af-4c43-81c7-7cf6ab4f3570&event_id=sale&sale_amount=53.2&orginal_sale_amount=10&original_sale_amount_currency=coins&user_id=">Sale</a>
+
+<script>
+    document.getElementById("subscription").href = document.getElementById("subscription").href +  Swaarm.identifier()
+</script>
+</body>
+</html>

@@ -16,7 +16,7 @@ window._Swaarm = {
                 lut[d2 & 0x3f | 0x80] + lut[d2 >> 8 & 0xff] + '-' + lut[d2 >> 16 & 0xff] + lut[d2 >> 24 & 0xff] +
                 lut[d3 & 0xff] + lut[d3 >> 8 & 0xff] + lut[d3 >> 16 & 0xff] + lut[d3 >> 24 & 0xff];
         }
-        return self;
+        return self.generate();
     },
 
     getQueryParams: function (qs) {
@@ -33,29 +33,7 @@ window._Swaarm = {
         return params;
     },
 
-    setCookie: function (name, value, hours) {
-        var expires = "";
-        if (hours) {
-            var date = new Date();
-            date.setTime(date.getTime() + (hours * 60 * 60 * 1000));
-            expires = "; expires=" + date.toUTCString();
-        }
-        document.cookie = name + "=" + (value || "") + expires + "; path=/";
-    },
-
-    getCookie: function (name) {
-        var nameEQ = name + "=";
-        var ca = document.cookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-        }
-        return null;
-    },
-
     SWAARM_CLICK_ID_NAME: "swaarm_clkid",
-    SWAARM_USER_ID_NAME: "swaarm_userid",
     DEBUG: false,
 
     log: function (message) {
@@ -174,30 +152,21 @@ window._Swaarm = {
 
     _landOrganic: function () {
         var url = this.trackingUrl + "click?no_redirect=true&web_token=" + this.webToken + "&" + this._collectUtmData();
-        this.log("Organic landing: " + url)
+        this.log("Organic user.")
         var self = this;
         this.sendRequest(url, function (data) {
             self._saveClickId(data.id)
         }, true);
     },
 
-    _generateUserId: function (click_id) {
-        if (!click_id) {
-            click_id = this._generateUUID();
-        }
-        window.localStorage.setItem(this.SWAARM_USER_ID_NAME, click_id);
-    },
-
     _saveClickId: function (click_id) {
         this.log("Saving clkid " + click_id + ".");
         window.localStorage.setItem(this.SWAARM_CLICK_ID_NAME, click_id);
-        this.setCookie(this.SWAARM_CLICK_ID_NAME, click_id, 168);
     },
 
     land: function () {
         this.validateInit();
         var params = this.getQueryParams(window.location.search);
-        this._generateUserId(params.clkid)
         if (params.clkid == null) {
             this.log("No clkid found.")
             this._landOrganic();
@@ -267,14 +236,11 @@ window._Swaarm = {
 
     getClickId: function () {
         var clickId = window.localStorage.getItem(this.SWAARM_CLICK_ID_NAME);
-        if (clickId == null) {
-            clickId = this.getCookie(this.SWAARM_CLICK_ID_NAME);
-        }
         return clickId;
     },
 
     _getUserId: function () {
-        return window.localStorage.getItem(this.SWAARM_USER_ID_NAME);
+        return window.localStorage.getItem(this.SWAARM_CLICK_ID_NAME);
     },
 
 
@@ -383,5 +349,13 @@ window.Swaarm = {
             "original_sale_amount_currency": options.originalSaleAmountCurrency
 
         });
+    },
+
+    /**
+     * Fires an open event that marks that the user is active. You should always fire it when your user creates a new session,
+     * e.g. logs in the app
+     */
+    open: function () {
+        this.event("__open")
     }
 }

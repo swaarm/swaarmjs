@@ -86,7 +86,7 @@ window._Swaarm = {
         }
     },
 
-    initialize: function (trackingUrl, webToken) {
+    initialize: function (trackingUrl, webToken, defaultOfferId, defaultPubId) {
         if (trackingUrl == null || !trackingUrl.startsWith("http")) {
             throw new Error("Invalid tracking url received: " + trackingUrl)
         }
@@ -94,8 +94,10 @@ window._Swaarm = {
             trackingUrl = trackingUrl + '/';
         }
         this.trackingUrl = trackingUrl
-        this.configured = true;
         this.webToken = webToken;
+        this.defaultOfferId = defaultOfferId;
+        this.defaultPubId = defaultPubId;
+        this.configured = true;
     },
 
     enableDebug: function () {
@@ -169,10 +171,29 @@ window._Swaarm = {
         var params = this.getQueryParams(window.location.search);
         if (params.clkid == null) {
             this.log("No clkid found.")
-            this._landOrganic();
+            if (this.webToken == null) {
+                this._sanLand()
+            } else {
+                this._landOrganic();
+            }
             return;
+        } else {
+            this._saveClickId(params.clkid)
         }
-        this._saveClickId(params.clkid)
+    },
+
+    _sanLand: function () {
+        this.validateInit()
+        var params = this.getQueryParams(window.location.search);
+        if (params.gclid == null && params.fbclid == null) {
+            this.log("No google or facebook click ids found")
+        }
+        var self = this;
+        this.sendRequest(
+            this.trackingUrl + "click?no_redirect=true&offer_id=" + this.defaultOfferId + "&pub_id=" + this.defaultPubId,
+            function (data) {
+                self._saveClickId(data.id);
+            }, true);
     },
 
     click: function (extras, callback) {
@@ -265,10 +286,12 @@ window.Swaarm = {
      * @param settings a JS object that has the following properties:
      *  - trackingUrl string, the base domain URL for your Swaarm account, e.g. https://track.mycompany.swaarm-clients.com
      *  - webToken string, optional parameter used for web apps to identify the app
+     *  - defaultOfferId string, optional, this offer will be assigned to the clicks when no click id is present
+     *  - defaultPubId string, optional, same as offer but for pubs
      *  - debug boolean, to indicate if we should log debugging information
      */
     initialize: function (settings) {
-        window._Swaarm.initialize(settings.trackingUrl, settings.webToken);
+        window._Swaarm.initialize(settings.trackingUrl, settings.webToken, settings.defaultOfferId, settings.defaultPubId);
         if (settings.debug) {
             window._Swaarm.enableDebug();
         }

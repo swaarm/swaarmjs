@@ -34,6 +34,8 @@ window._Swaarm = {
     },
 
     SWAARM_CLICK_ID_NAME: "swaarm_clkid",
+    SWAARM_USER_ID_NAME: "swaarm_userid",
+
     DEBUG: false,
 
     log: function (message) {
@@ -78,6 +80,24 @@ window._Swaarm = {
         }
         oReq.open("GET", url);
         oReq.send();
+    },
+
+    sendSDKRequest: function (data) {
+        var url = this.trackingUrl + "websdk"
+        this.log("Requesting SDK event: " + url)
+        var oReq = new XMLHttpRequest();
+        var self = this;
+        oReq.addEventListener("load", function () {
+            self.log("Request to " + url + " sent successfully.")
+        });
+
+        if (data.vendorId == null) {
+            data.vendorId = this.userId
+        }
+        oReq.open("POST", url);
+        oReq.setRequestHeader("Authorization", "Bearer " + this.webToken);
+        oReq.setRequestHeader("Content-Type", "application/json");
+        oReq.send(JSON.stringify(data));
     },
 
     validateInit: function () {
@@ -161,9 +181,13 @@ window._Swaarm = {
         }, true);
     },
 
-    _saveClickId: function (click_id) {
-        this.log("Saving clkid " + click_id + ".");
-        window.localStorage.setItem(this.SWAARM_CLICK_ID_NAME, click_id);
+    _saveClickId: function (clickId) {
+        this.log("Saving clkid " + clickId + ".");
+        window.localStorage.setItem(this.SWAARM_CLICK_ID_NAME, clickId);
+    },
+    _saveUserId: function (userId) {
+        this.log("Saving user id " + userId + ".");
+        window.localStorage.setItem(this.SWAARM_USER_ID_NAME, userId);
     },
 
     land: function () {
@@ -176,7 +200,6 @@ window._Swaarm = {
             } else {
                 this._landOrganic();
             }
-            return;
         } else {
             this._saveClickId(params.clkid)
         }
@@ -261,7 +284,11 @@ window._Swaarm = {
     },
 
     _getUserId: function () {
-        return window.localStorage.getItem(this.SWAARM_CLICK_ID_NAME);
+        var userId = window.localStorage.getItem(this.SWAARM_USER_ID_NAME);
+        if (userId != null) {
+            return userId;
+        }
+        return window.localStorage.getItem(this.SWAARM_USER_ID_NAME);
     },
 
 
@@ -273,10 +300,28 @@ window._Swaarm = {
         this.validateInit();
         var clickId = this.getClickId();
         if (clickId == null) {
+            options = options == null ? {} : options
             this.log("No clickid found. Organic attribution.");
+            var userId = this._getUserId();
+            if (userId == null) {
+                return;
+            }
+            options.userId = userId;
+            this._sdkEvent(options)
             return;
         }
         this.emitEvent(clickId, options);
+    },
+
+    _sdkEvent: function (event) {
+        this.sendSDKRequest({
+            typeId: event.type,
+            aggregatedValue: event.aggregated_value,
+            customValue: event.event_value,
+            vendorId: event.userId,
+            revenue: event.sale_amount,
+            currency: event.sale_amount_currency
+        })
     }
 }
 
@@ -359,8 +404,12 @@ window.Swaarm = {
      *  - saleAmount Number the amount earned for this event in the major denomination (e.g. dollars not cents)
      *  - saleAmountCurrency String the fiat currency in which the amount is paid
      *  - originalSaleAmount Number the amount earned for this event in the original currency (e.g. crypto currencies,
-     *  in-game currencies etc)
+     *  in-game currencies etc.)
      *  - originalSaleCurrency String the currency in which the transaction orginally took place
+     *  - aggregatedValue Number a non-monetary numeric value that will be aggregated by Swaarm in reports (e.g. levels
+     *  completed in the game, time spent completing a task etc.)
+     *  - customValue String a free-form value to be associated to the event (e.g. a json that encodes the behavior of
+     *  the user during the checkout process)
      */
     event: function (eventName, options) {
         options = options == null ? {} : options
@@ -369,9 +418,19 @@ window.Swaarm = {
             "sale_amount": options.saleAmount,
             "sale_amount_currency": options.saleAmountCurrency,
             "original_sale_amount": options.originalSaleAmount,
-            "original_sale_amount_currency": options.originalSaleAmountCurrency
+            "original_sale_amount_currency": options.originalSaleAmountCurrency,
+            "aggregated_value": options.aggregatedValue,
+            "event_value": options.customValue
 
         });
+    },
+
+    /**
+     * Assigns a user id to the current session
+     * @param userId - an identifier for this user
+     */
+    setUserId: function (userId) {
+        window._Swaarm._saveUserId(userId);
     },
 
     /**

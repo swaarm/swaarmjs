@@ -1,0 +1,25 @@
+<html>
+<head>
+    <title>Swaarm SDK examples</title>
+    <script src="../../src/swaarm.js"></script>
+</head>
+<body>
+
+<script>
+    Swaarm.initialize({
+        "trackingUrl": "https://hector.trckswrm.com",
+        "debug": true,
+        "webToken": "31f3e114-076b-4fae-86e3-9a3a900ccba1"
+    })
+
+</script>
+
+<button onclick="Swaarm.setUserId('myUser1');Swaarm.attribute()">Register</button>
+
+<button onclick="Swaarm.event('subscription')">Subscribe to newsletter</button>
+
+<button onclick="Swaarm.event('sale',{'saleAmount': 53.2,'originalSaleAmount': 10, 'originalSaleAmountCurrency': 'coins'})">
+    Buy 10 coins
+</button>
+</body>
+</html>

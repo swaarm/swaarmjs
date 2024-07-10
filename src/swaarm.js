@@ -353,6 +353,22 @@ window.Swaarm = {
         window._Swaarm.replaceMarkedLinks(selector, prelandingOffer, prelandingPub);
     },
 
+    addClickIdToLinks: function (selector) {
+        selector = selector == null ? "a" : selector;
+        document.querySelectorAll(selector).forEach((e) => {
+            e.addEventListener('click', function () {
+                var separator = "?"
+                if (e.href.indexOf("?") === -1) {
+                    separator = "?"
+                } else {
+                    separator = "&"
+                }
+                e.href = e.href + separator + "click_id=" + Swaarm.clickId();
+
+            })
+        });
+    },
+
     /**
      * Registers this user as a potential converting user. This method should be called on every landing page.
      */

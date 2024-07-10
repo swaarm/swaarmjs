@@ -1,10 +1,12 @@
 <html>
 <head>
     <title>Swaarm SDK examples</title>
-    <script src="../../src/swaarm.js"></script>
 </head>
 <body>
 
+<a class="btn btn-orange" href="http://flanche.net/examples/thankyou.html" target="_blank">Click To Buy</a>
+
+<script src="../../src/swaarm.js"></script>
 <script>
     Swaarm.initialize({
         "trackingUrl": "https://track.buster.swaarm-clients.com/",
@@ -13,6 +15,6 @@
         "defaultPubId": "207"
     })
     Swaarm.land();
+    Swaarm.addClickIdToLinks();
 </script>
-<a href="javascript:window.location.href='https://track.buster.swaarm-clients.com/postback?click_id='+Swaarm.clickId();">Click for postback</a>
 </body>

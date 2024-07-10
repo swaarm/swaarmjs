@@ -1,0 +1,18 @@
+<html>
+<head>
+    <title>Swaarm SDK examples</title>
+    <script src="../../src/swaarm.js"></script>
+</head>
+<body>
+
+<script>
+    Swaarm.initialize({
+        "trackingUrl": "https://track.buster.swaarm-clients.com/",
+        "debug": true,
+        "defaultOfferId": "10",
+        "defaultPubId": "207"
+    })
+    Swaarm.land();
+</script>
+<a href="javascript:window.location.href='https://track.buster.swaarm-clients.com/postback?click_id='+Swaarm.clickId();">Click for postback</a>
+</body>

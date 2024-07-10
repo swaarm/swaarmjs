@@ -213,7 +213,7 @@ window._Swaarm = {
         }
         var self = this;
         this.sendRequest(
-            this.trackingUrl + "click?no_redirect=true&offer_id=" + this.defaultOfferId + "&pub_id=" + this.defaultPubId,
+            this.trackingUrl + "click?no_redirect=true&offer_id=" + this.defaultOfferId + "&pub_id=" + this.defaultPubId + "&" + this._collectUtmData(),
             function (data) {
                 self._saveClickId(data.id);
             }, true);
@@ -387,6 +387,15 @@ window.Swaarm = {
      */
     identifier: function () {
         return window._Swaarm._getUserId();
+    },
+
+    /**
+     * Returns the click id for the current user that can be used to refer to it when communicating
+     * with Swaarm
+     * @returns String
+     */
+    clickId: function () {
+        return window._Swaarm.getClickId();
     },
 
     /**

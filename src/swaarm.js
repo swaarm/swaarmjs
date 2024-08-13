@@ -38,7 +38,7 @@ window._Swaarm = {
 
     DEBUG: false,
 
-    log: function (message) {
+    log: function (message, args) {
         if (!this.DEBUG) {
             return;
         }
@@ -84,7 +84,7 @@ window._Swaarm = {
 
     sendSDKRequest: function (data) {
         var url = this.trackingUrl + "websdk"
-        this.log("Requesting SDK event: " + url)
+        this.log("Requesting SDK event: " + url, )
         var oReq = new XMLHttpRequest();
         var self = this;
         oReq.addEventListener("load", function () {
@@ -288,7 +288,10 @@ window._Swaarm = {
         if (userId != null) {
             return userId;
         }
-        return window.localStorage.getItem(this.SWAARM_USER_ID_NAME);
+        userId = this._generateUUID()
+        this.log("Assigning user id to " + userId);
+        window.localStorage.setItem(this.SWAARM_USER_ID_NAME, userId);
+        return userId;
     },
 
 
@@ -299,9 +302,8 @@ window._Swaarm = {
     event: function (options) {
         this.validateInit();
         var clickId = this.getClickId();
-        if (clickId == null) {
+        if (clickId == null || this.webToken != null) {
             options = options == null ? {} : options
-            this.log("No clickid found. Organic attribution.");
             var userId = this._getUserId();
             if (userId == null) {
                 return;
@@ -315,7 +317,7 @@ window._Swaarm = {
 
     _sdkEvent: function (event) {
         this.sendSDKRequest({
-            typeId: event.type,
+            typeId: event.event_id,
             aggregatedValue: event.aggregated_value,
             customValue: event.event_value,
             vendorId: event.userId,
